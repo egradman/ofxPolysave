@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>32C066BC-872C-4C80-9502-1810F5F9EA6E</string>
+	<key>IDESourceControlProjectName</key>
+	<string>emptyExample</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>754407b6-e68f-11de-91d6-89caad0352f8++812</key>
+		<string>http://rogue-code.googlecode.com/svn/Arduino/libraries/Tone/trunk/examples/DTMFTest</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>of_v0.8.4_osx_release/apps/myApps/emptyExample/emptyExample.xcodeproj</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>754407b6-e68f-11de-91d6-89caad0352f8++812</key>
+		<string>../../../../../..</string>
+	</dict>
+	<key>IDESourceControlProjectRepositoryRootDictionary</key>
+	<dict>
+		<key>754407b6-e68f-11de-91d6-89caad0352f8++812</key>
+		<string>http://rogue-code.googlecode.com/svn</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>http://rogue-code.googlecode.com/svn/Arduino/libraries/Tone/trunk/examples/DTMFTest/of_v0.8.4_osx_release/apps/myApps/emptyExample/emptyExample.xcodeproj</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>754407b6-e68f-11de-91d6-89caad0352f8++812</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.subversion</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>754407b6-e68f-11de-91d6-89caad0352f8++812</string>
+			<key>IDESourceControlWCCName</key>
+			<string>dev</string>
+		</dict>
+	</array>
+</dict>
+</plist>
