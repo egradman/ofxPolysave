@@ -53,3 +53,6 @@ To fetch a saved poly, call `polysave.getPolylineByName(string name)` or `polysa
 - There's a bug in the "insert handle at this point" code which occasionally yields zigzags.
 - SHIFT key in rect or ellipse should constrain proportions
 - Moving ellipses only works in the bounding box of the handles
+- customizable the activate trigger key in setup
+- awkward! getRectangleByName/getPolylineByName is a O(n) (okay for human numbers of saved polys)
+- Bezier/catmull curve editor.  This is feature creep.  Don't do it!
