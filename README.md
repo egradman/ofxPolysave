@@ -17,8 +17,6 @@ If you ever find yourself hard coding screen coordinates into your program, cons
 
 It's a GUI tool which is terribly useful during application development, because you can edit the geometry while your application is still running allowing you (and the person hovering over your shoulder) can see the outcome immediately.  ofxPolysave generates a datafile which is consumed elsewhere in the program, and in that regard it's inspired by ofxTimeline.
 
-How useful _is_ it?  Check out the following screencast.
-
 ## Setup
 
 1. Include "ofxPolysave.h" and create an ofxPolysave object in your ofApp:
