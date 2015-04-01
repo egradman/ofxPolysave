@@ -1,0 +1,20 @@
+<shape name="textblock" type="rectangle" closed="0">
+    <point>
+        <x>326.000000000</x>
+        <y>196.000000000</y>
+    </point>
+    <point>
+        <x>681.000000000</x>
+        <y>419.000000000</y>
+    </point>
+</shape>
+<shape name="image" type="rectangle" closed="0">
+    <point>
+        <x>146.000000000</x>
+        <y>39.000000000</y>
+    </point>
+    <point>
+        <x>857.000000000</x>
+        <y>778.000000000</y>
+    </point>
+</shape>
