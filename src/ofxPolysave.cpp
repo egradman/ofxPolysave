@@ -28,6 +28,7 @@ void ofxPolysave::update(ofEventArgs &eventArgs) {
 }
 
 void ofxPolysave::draw(ofEventArgs &eventArgs) {
+  ofPushStyle();
   if (cur_idx == -1) show_help = true;
   if (active && show_help) {
     stringstream ss;
@@ -65,6 +66,7 @@ void ofxPolysave::draw(ofEventArgs &eventArgs) {
 
     ofSetColor(ofRandom(0, 255), ofRandom(0, 255), ofRandom(0, 255));
   }
+  ofPopStyle();
 }
 
 void ofxPolysave::mousePressed(ofMouseEventArgs &eventArgs) {
