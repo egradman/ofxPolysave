@@ -7,70 +7,137 @@ ofxPolysave::ofxPolysave() : corner("NONE") {
 void ofxPolysave::setup() {
   active = false;
   ofAddListener(ofEvents().keyPressed, this, &ofxPolysave::keyPressed, OF_EVENT_ORDER_AFTER_APP );  
+  ofAddListener(ofEvents().keyReleased, this, &ofxPolysave::keyReleased, OF_EVENT_ORDER_AFTER_APP );  
   ofAddListener(ofEvents().draw, this, &ofxPolysave::draw, OF_EVENT_ORDER_AFTER_APP);  
+  ofAddListener(ofEvents().update, this, &ofxPolysave::update, OF_EVENT_ORDER_AFTER_APP);  
   ofAddListener(ofEvents().mousePressed, this, &ofxPolysave::mousePressed, OF_EVENT_ORDER_AFTER_APP);
   ofAddListener(ofEvents().mouseReleased, this, &ofxPolysave::mouseReleased, OF_EVENT_ORDER_AFTER_APP);
   ofAddListener(ofEvents().mouseDragged, this, &ofxPolysave::mouseDragged, OF_EVENT_ORDER_AFTER_APP);  
 
   load();
+
+  move_mode = "";
+}
+
+void ofxPolysave::update(ofEventArgs &eventArgs) {
+  if (cur_idx != -1) {
+    cur_shape = shapes[cur_idx];
+  } else {
+    cur_shape = NULL;
+  }
 }
 
 void ofxPolysave::draw(ofEventArgs &eventArgs) {
-  if (!active || cur_rect_idx == -1) return;
-  NamedRectangle &r = rects[cur_rect_idx];
-  ofPushStyle();
-  ofSetColor(ofRandom(0, 255), ofRandom(0, 255), ofRandom(0, 255));
-  ofNoFill();
-  ofRect(r);
-  stringstream ss;
-  ss << r.name << " x" << r.x << " y" << r.y << " w"<<r.width << " h"<<r.height;
-  ofDrawBitmapStringHighlight(ss.str(), r.getLeft() + 10, r.getTop() + 20);
-  ofPopStyle();
+  if (cur_idx == -1) show_help = true;
+  if (active && show_help) {
+    stringstream ss;
+    ss<< "ofxPolysave active" << endl
+      << "------------------------" << endl
+      << "arrow u/d  prev/next poly  " << endl
+      << "   :e      new ellipse" << endl
+      << "   :r      new rectangle" << endl
+      << "   :p      new polyline" << endl
+      << "   :c      toggle closed" << endl
+      << "   :w      write file" << endl
+      << "   :d      delete poly" << endl
+      << "   ?       toggle help" << endl
+      << "   |       toggle editor" << endl
+      << endl
+      << "registered names [a-z0-9_]" << endl
+      << "--------------------------" << endl;
+
+    for (int i=0; i<shapes.size(); i++) {
+      NamedShape *s = shapes[i];
+      if (cur_idx == i)
+        ss << "[x] " << s->name << endl;
+      else
+        ss << "[ ] " << s->name << endl;
+    }
+
+    ofSetColor(255);
+    ofDrawBitmapStringHighlight(ss.str(), 0, 12, ofColor(0, 0, 0, 128), ofColor(255));
+  }
+
+  if (active && cur_shape) {
+    ofPushStyle();
+    cur_shape->draw();
+    ofPopStyle();
+
+    ofSetColor(ofRandom(0, 255), ofRandom(0, 255), ofRandom(0, 255));
+  }
 }
 
 void ofxPolysave::mousePressed(ofMouseEventArgs &eventArgs) {
-  if (!active || cur_rect_idx == -1) return;
-  ofVec2f p(eventArgs.x, eventArgs.y);
-  NamedRectangle &r = rects[cur_rect_idx];
-  if (p.distance(r.getTopLeft()) < 10) corner = "TL";
-  else if (p.distance(r.getTopRight()) < 10) corner = "TR";
-  else if (p.distance(r.getBottomRight()) < 10) corner = "BR";
-  else if (p.distance(r.getBottomLeft()) < 10) corner = "BL";
-  else if (r.inside(p)) corner = "CENTER";
-  else corner = "NONE";
+  if (!active || !cur_shape) return;
+  
+  move_start.set(eventArgs.x, eventArgs.y);
+  move_points_start = cur_shape->points;
+
+  move_mode = "";
+
+  ofPolyline poly = cur_shape->get_polyline();
+
+  unsigned int closest_idx;
+  ofPoint closest_point = poly.getClosestPoint(move_start, &closest_idx);
+  if (closest_idx == 0) {
+    // if its zero, definitely insert AFTER 0
+    closest_idx = 1;
+  } else if (closest_idx == cur_shape->points.size()-1) {
+    // if it's the last one, insert BEFORE the last one
+    closest_idx = closest_idx;
+  } else {
+    ofVec2f a(cur_shape->points[closest_idx-1]);
+    ofVec2f b(cur_shape->points[closest_idx  ]);
+    ofVec2f c(cur_shape->points[closest_idx+1]);
+    ofVec2f P(closest_point);
+
+    // there's a bug here.  I wish getClosestPoint would yield a float!
+    if ((b-a).angle(P-b) < (c-b).angle(P-b)) {
+      closest_idx = closest_idx;
+    } else {
+      closest_idx = closest_idx+1;
+    }
+  }
+
+  if (poly.getBoundingBox().inside(move_start)) {
+    move_mode = "move_all";
+  }
+
+  for (int i=0; i<cur_shape->points.size(); i++) {
+    if (move_start.distance(cur_shape->points[i]) < 10) {
+      move_mode = "move_one";
+      move_idx = i;
+    }
+  }
+
+  if (shift_pressed) {
+    if (move_mode == "move_one") {
+      cur_shape->points.erase(cur_shape->points.begin() + move_idx);
+    } else if (move_mode == "move_all") {
+      cur_shape->points.insert(cur_shape->points.begin()+closest_idx, closest_point);
+    }
+    move_mode == "";
+  }
 }
 
 void ofxPolysave::mouseReleased(ofMouseEventArgs &eventArgs) {
-  if (!active || cur_rect_idx == -1) return;
-  corner = "NONE";
+  move_mode = "";
+}
+
+void ofxPolysave::advanceShape(int direction) {
+  cur_idx = ofWrap(cur_idx + direction, 0, shapes.size());
 }
 
 void ofxPolysave::mouseDragged(ofMouseEventArgs &eventArgs) {
-  if (!active || cur_rect_idx == -1) return;
-  if (corner == "NONE") return;
-  NamedRectangle &r = rects[cur_rect_idx];
-  ofVec2f p(eventArgs.x, eventArgs.y);
-
-  ofPoint tl = r.getTopLeft();
-  ofPoint br = r.getBottomRight();
-
-  if (corner == "TL") {
-      tl = p;
-  } else if (corner == "TR") {
-      br.x = p.x;
-      tl.y = p.y;
-  } else if (corner == "BR") {
-      br = p;
-  } else if (corner == "BL") {
-      tl.x = p.x;
-      br.y = p.y;
-  } else if (corner == "CENTER") {
-    ofRectangle r2;
-    r2.setFromCenter(p, r.width, r.height);
-    tl = r2.getTopLeft();
-    br = r2.getBottomRight();
+  if (!active || !cur_shape) return;
+  ofPoint move_pos(eventArgs.x, eventArgs.y);
+  if (move_mode == "move_all") {
+    for (int i=0; i<cur_shape->points.size(); i++) {
+      cur_shape->points[i] = move_points_start[i] + (move_pos - move_start);
+    }
+  } else if (move_mode == "move_one") {
+    cur_shape->points[move_idx] = move_points_start[move_idx] + (move_pos - move_start);
   }
-  r.set(tl, br);
 }
 
 void ofxPolysave::keyPressed(ofKeyEventArgs &eventArgs) {
@@ -85,83 +152,204 @@ void ofxPolysave::keyPressed(ofKeyEventArgs &eventArgs) {
   if (!active) return;
 
   switch (key) {
-    case '+':
-      // create a new rect
-      new_rect();
+    case ':':
+      command_mode = !command_mode;
       break;
-    case '=':
-      rects[cur_rect_idx].width = rects[cur_rect_idx].height;
+    case 'd':
+      break;
+    case OF_KEY_SHIFT:
+      shift_pressed = true;
+      ofLog() << "shift pressed";
       break;
     case OF_KEY_BACKSPACE:
-      rects[cur_rect_idx].name = rects[cur_rect_idx].name.substr(0, rects[cur_rect_idx].name.size()-1);
+      if (cur_shape)
+        cur_shape->name = cur_shape->name.substr(0, cur_shape->name.size()-1);
       break;
-    case OF_KEY_RETURN:
+    case OF_KEY_DOWN:
+      if (cur_idx != -1) advanceShape(1);
       break;
-    case ']':
-      if (cur_rect_idx != -1) 
-        cur_rect_idx = (cur_rect_idx + 1) % rects.size();
+    case OF_KEY_UP:
+      if (cur_idx != -1) advanceShape(-1);
       break;
+    case '?':
+      show_help = !show_help;
+
   }
-  if (('a' <= key && key <= 'z') || ('0' <= key && key <= '9') || key == '_') {
-    rects[cur_rect_idx].name += string(1, key);
+  if (command_mode) {
+    switch(key) {
+      case 'e':
+        createShape(new NamedEllipse());
+        command_mode = false;
+        break;
+      case 'r':
+        createShape(new NamedRectangle());
+        command_mode = false;
+        break;
+      case 'p':
+        createShape(new NamedPolyline());
+        command_mode = false;
+        break;
+      case 'd':
+        delete_cur_shape();
+        command_mode = false;
+        break;
+      case 'w':
+        save();
+        command_mode = false;
+        break;
+      case 'c':
+        if (cur_shape) {
+          cur_shape->is_closed = !cur_shape->is_closed;
+        }
+        save();
+        command_mode = false;
+        break;
+    }
+  } else if (('a' <= key && key <= 'z') || ('0' <= key && key <= '9') || key == '_') {
+    cur_shape->name += string(1, key);
   }
 }
 
-void ofxPolysave::new_rect() {
-  NamedRectangle r;
-  r.name = "unnamed";
-  r.set(10, 10, ofGetWidth()-10, ofGetHeight()-10);
-  rects.push_back(r);
-  cur_rect_idx = rects.size()-1;
+void ofxPolysave::keyReleased(ofKeyEventArgs &eventArgs) {
+  int key = eventArgs.key;
+  switch (key) {
+    case OF_KEY_SHIFT:
+      shift_pressed = false;
+      ofLog() << "shift released";
+      break;
+  }
+}
+
+void ofxPolysave::createShape(NamedShape *shape) {
+  shape->name = "new_shape";
+  shape->points.push_back(ofPoint(20, 20));
+  shape->points.push_back(ofPoint(200, 200));
+  shapes.push_back(shape);
+  cur_idx = shapes.size()-1;
+}
+
+void ofxPolysave::delete_cur_shape() {
+  shapes.erase(shapes.begin() + cur_idx);
+  if (shapes.size() == 0) {
+    cur_idx = -1;
+  } else {
+    advanceShape(-1);
+  }
 }
 
 void ofxPolysave::load() {
   ofxXmlSettings xml;
   xml.loadFile("polysave.xml");
-  rects.clear();
-  for (int i=0; i<xml.getNumTags("rect"); i++) {
-    NamedRectangle r;
-    r.name = xml.getAttribute("rect", "name", "!!!", i);
-    xml.pushTag("rect", i);
-    r.x = xml.getValue("x", 10);
-    r.y = xml.getValue("y", 10);
-    r.width = xml.getValue("width", ofGetWidth()-10);
-    r.height = xml.getValue("height", ofGetHeight()-10);
-    rects.push_back(r);
+  shapes.clear();
+  for (int i=0; i<xml.getNumTags("shape"); i++) {
+    NamedShape *s;
+    string type = xml.getAttribute("shape", "type", "polyline", i);
+    if (type == "polyline") {
+      s = new NamedPolyline();
+    } else if (type == "rectangle") {
+      s = new NamedRectangle();
+    } else if (type == "ellipse") {
+      s = new NamedEllipse();
+    }
+
+    ofLog() << " loaded a " << type;
+
+    s->name = xml.getAttribute("shape", "name", "!!!", i);
+    s->is_closed = xml.getAttribute("shape", "closed", false, i);
+    xml.pushTag("shape", i);
+    for (int j=0; j<xml.getNumTags("point"); j++) {
+      xml.pushTag("point", j);
+      s->points.push_back(ofPoint(xml.getValue("x", 0), xml.getValue("y", 0)));
+      xml.popTag();
+    }
+    shapes.push_back(s);
     xml.popTag();
   }
 
-  if (rects.size())
-    cur_rect_idx = 0;
+  if (shapes.size())
+    cur_idx = 0;
   else
-    cur_rect_idx = -1;
+    cur_idx = -1;
 }
 
 void ofxPolysave::save() {
   ofxXmlSettings xml;
-  for (int i=0; i<xml.getNumTags("rect"); i++) {
-    xml.removeTag("rect", i);
+  for (int i=0; i<xml.getNumTags("poly"); i++) {
+    xml.removeTag("poly", i);
   }
-  for (int i=0; i<rects.size(); i++) {
-    NamedRectangle &r = rects[i];
-    xml.addTag("rect");
-    xml.setAttribute("rect", "name", r.name, i);
-    xml.pushTag("rect", i);
-    xml.setValue("x", r.x);
-    xml.setValue("y", r.y);
-    xml.setValue("width", r.width);
-    xml.setValue("height", r.height);
+  for (int i=0; i<shapes.size(); i++) {
+    NamedShape *s = shapes[i];
+    xml.addTag("shape");
+    xml.setAttribute("shape", "name", s->name, i);
+    xml.setAttribute("shape", "type", s->get_type(), i);
+    xml.setAttribute("shape", "closed", s->is_closed, i);
+    xml.pushTag("shape", i);
+    stringstream ss;
+    for (int j=0; j<s->points.size(); j++) {
+      xml.addTag("point");
+      xml.pushTag("point", j);
+      xml.setValue("x", s->points[j].x);
+      xml.setValue("y", s->points[j].y);
+      xml.popTag();
+    }
     xml.popTag();
   }
   xml.saveFile("polysave.xml");
 }
 
 ofRectangle ofxPolysave::getRectangleByName(string name) {
-  for (vector<NamedRectangle>::iterator r=rects.begin(); r!=rects.end(); r++) {
-    if (name == r->name)
-      return ofRectangle(*r);
+  // replace this with a map!
+  for (vector<NamedShape *>::iterator s=shapes.begin(); s!=shapes.end(); s++) {
+    if (name == (*s)->name)
+      return ofRectangle((*s)->points[0], (*s)->points[1]);
   }
-  return ofRectangle(30, 30, ofGetWidth()-60, ofGetHeight()-60);
+  ofLog() << "rectangle " << name << " not found";
+  return ofRectangle();
 }
 
+ofPolyline ofxPolysave::getPolylineByName(string name) {
+  // replace this with a map!
+  for (vector<NamedShape *>::iterator s=shapes.begin(); s!=shapes.end(); s++) {
+    if (name == (*s)->name)
+      return (*s)->get_polyline();
+  }
+  ofLog() << "polyline " << name << " not found";
+  return ofPolyline();
+}
 
+void NamedPolyline::draw() {
+
+  ofSetColor(ofRandom(0, 255), ofRandom(0, 255), ofRandom(0, 255));
+  get_polyline().draw();
+
+  ofSetColor(ofRandom(0, 255), ofRandom(0, 255), ofRandom(0, 255));
+  ofNoFill();
+  for (vector<ofPoint>::iterator p=points.begin(); p!=points.end(); p++) {
+    ofCircle(*p, 6);
+  }
+}
+
+void NamedRectangle::draw() {
+  ofNoFill();
+
+  ofSetColor(ofRandom(0, 255), ofRandom(0, 255), ofRandom(0, 255));
+  ofRect(ofRectangle(points[0], points[1]));
+
+  ofSetColor(ofRandom(0, 255), ofRandom(0, 255), ofRandom(0, 255));
+  ofCircle(points[0], 6);
+  ofCircle(points[1], 6);
+}
+
+void NamedEllipse::draw() {
+  ofNoFill();
+
+  ofSetColor(ofRandom(0, 255), ofRandom(0, 255), ofRandom(0, 255));
+  ofEllipse(
+    points[0],
+    (points[1].x-points[0].x)*2, (points[1].y-points[0].y)*2
+  );
+
+  ofSetColor(ofRandom(0, 255), ofRandom(0, 255), ofRandom(0, 255));
+  ofCircle(points[0], 6);
+  ofCircle(points[1], 6);
+}

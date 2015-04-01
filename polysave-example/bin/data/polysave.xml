@@ -1,0 +1,32 @@
+<shape name="my_rect" type="rectangle" closed="0">
+    <point>
+        <x>291.000000000</x>
+        <y>256.000000000</y>
+    </point>
+    <point>
+        <x>674.000000000</x>
+        <y>470.000000000</y>
+    </point>
+</shape>
+<shape name="my_path" type="polyline" closed="1">
+    <point>
+        <x>127.000000000</x>
+        <y>494.000000000</y>
+    </point>
+    <point>
+        <x>318.000000000</x>
+        <y>154.000000000</y>
+    </point>
+    <point>
+        <x>819.000000000</x>
+        <y>214.000000000</y>
+    </point>
+    <point>
+        <x>860.000000000</x>
+        <y>568.000000000</y>
+    </point>
+    <point>
+        <x>514.000000000</x>
+        <y>683.000000000</y>
+    </point>
+</shape>
