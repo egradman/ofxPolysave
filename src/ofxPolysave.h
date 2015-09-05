@@ -60,6 +60,8 @@ class ofxPolysave {
     void advanceShape(int direction);
     void createShape(NamedShape *shape);
 
+    vector<string> getNames();
+
     string corner; // which corner is being moved
 
   private:

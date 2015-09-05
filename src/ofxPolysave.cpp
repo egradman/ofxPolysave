@@ -319,6 +319,15 @@ ofPolyline ofxPolysave::getPolylineByName(string name) {
   return ofPolyline();
 }
 
+vector<string> ofxPolysave::getNames() {
+  vector<string> names;
+  for (vector<NamedShape *>::iterator s=shapes.begin(); s!=shapes.end(); s++) {
+    names.push_back((*s)->name);
+  }
+  return names;
+}
+
+
 void NamedPolyline::draw() {
 
   ofSetColor(ofRandom(0, 255), ofRandom(0, 255), ofRandom(0, 255));
